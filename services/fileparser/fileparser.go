@@ -6,7 +6,7 @@ import (
 	"github.com/coding-yogi/perftool/config"
 	"github.com/coding-yogi/perftool/log"
 	"github.com/coding-yogi/perftool/rmq"
-	uuid "github.com/satori/go.uuid"
+	"github.com/coding-yogi/perftool/utils"
 	"github.com/streadway/amqp"
 )
 
@@ -82,7 +82,7 @@ func (r *Reply) Parse() {
 	body, err := json.Marshal(fileParserMessage)
 	failOnError(err, "Unable to create file parser message body")
 
-	uuid := uuid.NewV4().String()
+	uuid := utils.GetUDID()
 	table := amqp.Table{}
 	table["nameko.correlation_id"] = "111-222-333-444-555"
 

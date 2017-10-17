@@ -2,11 +2,11 @@ package rmq
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 
 	"time"
 
+	"github.com/coding-yogi/perftool/log"
 	"github.com/streadway/amqp"
 )
 
@@ -108,7 +108,7 @@ func (ch *Channel) bindQueueToExchange(queueName, routingKey, exName string) err
 
 // PublishMessageAsRPC ...
 func (ch *Channel) PublishMessageAsRPC(exName, routingKey string, msg amqp.Publishing) error {
-	log.Printf("Publish message to Exchange %s with Routing Key %s ", exName, routingKey)
+	log.Printf("Publish message to with Routing Key %s & correlation ID %s ", routingKey, msg.CorrelationId)
 	return ch.Publish(exName, routingKey, false, false, msg)
 }
 

@@ -2,8 +2,9 @@ package fileparser
 
 import (
 	"encoding/json"
-	"log"
 
+	"github.com/coding-yogi/perftool/config"
+	"github.com/coding-yogi/perftool/log"
 	"github.com/coding-yogi/perftool/rmq"
 	uuid "github.com/satori/go.uuid"
 	"github.com/streadway/amqp"
@@ -41,11 +42,27 @@ type FileParserMessage struct {
 	Args   []string `json:"args"`
 }
 
-func Setup(amqpClient *rmq.Client) {
+func init() {
+
+	settings, err := config.GetConfig()
+	failOnError(err, "Unable to get required configuration")
+
+	amqpClient := rmq.Client{
+		Host:     settings.RabbitMQ.Host,
+		Port:     settings.RabbitMQ.Port,
+		Username: settings.RabbitMQ.Username,
+		Password: settings.RabbitMQ.Password,
+	}
+
+	err = amqpClient.NewConnection()
+	failOnError(err, "Unable to connect to RabbitMQ")
+
+	//defer amqpClient.CloseConnection()
 	ch, err = amqpClient.SetupChannel(sp)
 	failOnError(err, "Unable to Setup Channel")
 }
 
+// CreateQueue ...
 func (r *Reply) CreateQueue() {
 	var err error
 	r.ReplyTo, err = ch.CreateReplyQueue(sp.ExchangeName)
@@ -55,6 +72,7 @@ func (r *Reply) CreateQueue() {
 	failOnError(err, "Registering consumer failed")
 }
 
+// Parse ...
 func (r *Reply) Parse() {
 
 	fileParserMessage := FileParserMessage{
@@ -65,8 +83,6 @@ func (r *Reply) Parse() {
 	failOnError(err, "Unable to create file parser message body")
 
 	uuid := uuid.NewV4().String()
-	log.Printf("Correlation ID:  %s", uuid)
-
 	table := amqp.Table{}
 	table["nameko.correlation_id"] = "111-222-333-444-555"
 
@@ -84,7 +100,7 @@ func (r *Reply) Parse() {
 
 	go func() {
 		msg, _ := rmq.GetMessageForCorrelationID(r.ChMsgs, uuid)
-		log.Printf("Msg response for correlation id %s -> %s", uuid, msg)
+		log.Info("Msg response for correlation id %s -> %s", uuid, msg)
 	}()
 
 }
